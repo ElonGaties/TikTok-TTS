@@ -1,2 +1,2 @@
 pub mod tiktts;
-pub mod ttsjson;
+pub mod json;

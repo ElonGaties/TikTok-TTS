@@ -1,9 +1,11 @@
 use std::sync::Arc;
-use reqwest::{header, Method, Url, cookie::Jar};
+use anyhow::Result;
+use reqwest::{Url, cookie::Jar};
+use reqwest::header::{ACCEPT, CONNECTION, CONTENT_LENGTH};
 
-type TTSResp = crate::ttsjson::Root;
+type TTSResp = crate::json::ttsjson::Root;
 
-const USERAGENT: String = "com.zhiliaoapp.musically/2022600030 (Linux; U; Android 7.1.2; es_ES; SM-G988N; Build/NRD90M;tt-ok/3.12.13.1)".parse().unwrap();
+const USERAGENT: &str = "com.ss.android.ugc.trill/290504 (Linux; U; Android 13; en; sdk_gphone_x86_64; Build/TE1A.220922.025;tt-ok/3.12.13.1)";
 
 pub struct TTS {
     req_client: reqwest::Client,
@@ -12,30 +14,34 @@ pub struct TTS {
 }
 
 impl TTS {
-    pub fn new(session_id: &str, api_url: &str) -> Self {
+    pub fn new(api_url: &str, session_id: &str) -> Result<Self> {
         let jar: Arc<Jar> = Arc::new(Jar::default());
         let cookies = format!("sessionid={}", session_id);
-        let url = api_url.parse::<Url>().unwrap();
-        let host = url.domain().unwrap().parse::<Url>().unwrap();
-        jar.add_cookie_str(&cookies, &host);
+        let url = api_url.parse::<Url>()?;
+        let host = url.host_str().unwrap_or("tiktokv.com");
+        jar.add_cookie_str(&cookies, &format!("{}://{}", url.scheme(), host).parse()?);
 
         let client = reqwest::Client::builder()
             .cookie_store(true)
             .cookie_provider(jar)
             .user_agent(USERAGENT)
-            .build().unwrap();
+            .build()?;
 
-        Self {
+        Ok(Self {
             req_client: client,
             session_id: session_id.to_string(),
             api_url: url
-        }
+        })
     }
 
-    pub async fn get_tts(&self, text: &str, voice: &str) -> TTSResp {
-        self.req_client.request(Method::POST, &self.api_url)
+    pub async fn get_tts(&self, text: &str, voice: &str) -> Result<TTSResp> { 
+        let req = self.req_client.post(self.api_url.clone())
             .query(&[("text_speaker", voice), ("req_text", text),
-                     ("speaker_map_type", "0"), ("aid", "1233")])
-            .send().await.unwrap().json().await.unwrap()
+                ("speaker_map_type", "1"), ("aid", "1233")])
+            .header(CONTENT_LENGTH, 0)
+            .header(CONNECTION, "keep-alive")
+            .header(ACCEPT, "*/*")
+            .send().await?.json().await?;
+        Ok(req)
     }
 }
