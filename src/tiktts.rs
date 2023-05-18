@@ -10,7 +10,7 @@ const USERAGENT: &str = "com.ss.android.ugc.trill/290504 (Linux; U; Android 13; 
 pub struct TTS {
     req_client: reqwest::Client,
     session_id: String,
-    api_url: Url
+    pub api_url: Url
 }
 
 impl TTS {

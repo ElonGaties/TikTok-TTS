@@ -1,15 +1,12 @@
 use std::sync::Arc;
+use axum::extract::Query;
+use axum::{Router, Extension};
+use axum::routing::{get, post};
 use serde::Deserialize;
-use tokio::sync::RwLock;
-use actix_web::{post, Responder, App, HttpServer, web, HttpResponse, get};
 use dotenv_codegen::dotenv;
 
 use tik_dfpwm::tiktts::TTS;
-use tik_dfpwm::convert::check_ffmpeg;
-
-struct RestState {
-    tts_client: Arc<RwLock<TTS>>
-}
+use tik_dfpwm::convert::{check_ffmpeg, convert_dfwpm};
 
     /*let tts = TTS::new("",
                           "").unwrap();
@@ -18,40 +15,40 @@ struct RestState {
 
     println!("{:?}", data);*/
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> std::io::Result<()> {
     let api_url = dotenv!("API_URL");
     let session_id = dotenv!("SESSION_ID");
 
     check_ffmpeg().await.unwrap();
 
-    let tts_client = Arc::new(RwLock::new(TTS::new(api_url, session_id).unwrap()));
+    let tts_client = Arc::new(TTS::new(api_url, session_id).unwrap());
 
-    HttpServer::new(move || {
-        App::new()
-            .app_data(web::Data::new(RestState {
-                tts_client: tts_client.clone()
+    let app = Router::new()
+            .route("/", get(|| async { "Hallo" }))
+            .route("/api", get(|Extension(state): Extension<Arc<TTS>>| async move { 
+                format!("Api: {}", state.api_url.as_str()) 
             }))
-            .service(request)
-            .service(tes)
-    })
-    .bind(("127.0.0.1", 132))?
-    .run()
-    .await
-}
+            .route("/request", post(request_tts))
+            .layer(Extension(tts_client));
 
-#[post("/test")]
-async fn tes() -> impl Responder {
-    format!("brsh")
+    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+        .serve(app.into_make_service())
+        .await.unwrap();
+
+    Ok(())
 }
 
 #[derive(Debug, Deserialize)]
-struct QueryData {
+struct RequestQuery {
     text: String,
-    voice: String
+    voice: String // Could be a enum, but there are a lot of voices (schizo fox)
 }
 
-#[post("/request")]
-async fn request(/*data: web::Data<RestState>,*/ queries: web::Query<QueryData>) -> impl Responder {
-    format!("{} {}", queries.text, queries.voice)
+async fn request_tts(query: Query<RequestQuery>, Extension(state): Extension<Arc<TTS>>) {
+    let tts_res = state.get_tts(&query.text, &query.voice).await.unwrap();
+    let b64_str = tts_res.data.v_str;
+    convert_dfwpm(&b64_str).await.unwrap();
+
+    // TODO: Send file
 }
