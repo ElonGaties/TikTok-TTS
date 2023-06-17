@@ -3,6 +3,12 @@ name = "tik-dfpwm"
 version = "0.1.0"
 edition = "2021"
 
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3
+
 [dependencies]
 reqwest = { version = "0.11.17", features = ["json", "cookies"] }
 serde = { version = "1.0.156", features = ["derive"] }
