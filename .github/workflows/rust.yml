@@ -10,19 +10,24 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  create-envfile:
+ 
+    runs-on: ubuntu-latest
+ 
+    steps:
+    - name: Make envfile
+      uses: SpicyPizza/create-envfile@v2.0
+      with:
+        envkey_SESSION_ID: ${{ secrets.SESSION_ID }}
+        envkey_API_URL: ${{ secrets.API_URL }}
+        file_name: .env
+
   build:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
-    - name: .env creation
-      uses: SpicyPizza/create-envfile@v2.0
-      with:
-        envkey_SESSION_ID: ${{ secrets.SESSION_ID }}
-        envkey_API_URL: ${{ secrets.API_URL }}
-        file_name: .env
-        fail_on_empty: true
     - name: Build
       run: cargo build --verbose
     - name: Run tests
