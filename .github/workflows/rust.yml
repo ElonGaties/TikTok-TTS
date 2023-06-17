@@ -16,6 +16,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: .env creation
+      run: |
+        echo API_URL=${{ secrets.API_URL }} >> .env"
+        echo SESSION_ID=${{ secrets.SESSION_ID }} >> .env"
     - name: Build
       run: cargo build --verbose
     - name: Run tests
