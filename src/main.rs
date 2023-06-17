@@ -23,6 +23,7 @@ use tik_dfpwm::convert::{check_ffmpeg, convert_dfwpm};
 async fn main() -> std::io::Result<()> {
     let api_url = dotenv!("API_URL");
     let session_id = dotenv!("SESSION_ID");
+    let interface = dotenv!("INTERFACE");
 
     check_ffmpeg().await.unwrap();
 
@@ -36,7 +37,7 @@ async fn main() -> std::io::Result<()> {
             .route("/request", post(anon_request))
             .layer(Extension(tts_client));
 
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+    axum::Server::bind(&interface.parse().unwrap())
         .serve(app.into_make_service())
         .await.unwrap();
 
