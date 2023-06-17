@@ -17,7 +17,7 @@ pub async fn convert_dfwpm(b64_str: &str) -> Result<()> {
         .arg("1")
         .arg("-ar")
         .arg("48000")
-        .arg(format!("output.dfpwm"))
+        .arg("output.dfpwm")
         .stdin(Stdio::piped())
         .spawn()?;
 
