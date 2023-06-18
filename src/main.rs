@@ -1,13 +1,13 @@
 use std::sync::Arc;
+use axum::routing::{get, post};
+use axum::{Router, Extension};
 use axum::body::StreamBody;
 use axum::extract::Query;
 use axum::response::{IntoResponse, Response};
-use axum::{Router, Extension};
-use axum::routing::{get, post};
 use reqwest::{StatusCode, header};
-use serde::Deserialize;
-use dotenv_codegen::dotenv;
 use tokio_util::io::ReaderStream;
+use serde::Deserialize;
+use dotenv::dotenv;
 
 use tik_dfpwm::tiktts::TTS;
 use tik_dfpwm::convert::{check_ffmpeg, convert_dfwpm};
@@ -21,13 +21,19 @@ use tik_dfpwm::convert::{check_ffmpeg, convert_dfwpm};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let api_url = dotenv!("API_URL");
-    let session_id = dotenv!("SESSION_ID");
-    let interface = dotenv!("INTERFACE");
+    /*let api_url = dotenv!("API_URL");
+    let session_id = dotenv!("SESSION_ID"); // This reads the .env file at build time which is not wanted
+    let interface = dotenv!("INTERFACE");*/
+
+    dotenv().ok();
+
+    let api_url = std::env::var("API_URL").expect("API_URL must be set");
+    let session_id = std::env::var("SESSION_ID").expect("SESSION_ID must be set"); // This is done at runtime
+    let interface = std::env::var("INTERFACE").expect("INTERFACE must be set");
 
     check_ffmpeg().await.unwrap();
 
-    let tts_client = Arc::new(TTS::new(api_url, session_id).unwrap());
+    let tts_client = Arc::new(TTS::new(&api_url, &session_id).unwrap());
 
     let app = Router::new()
             .route("/", get(|| async { "Hallo" }))
