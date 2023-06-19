@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use axum::routing::{get, post};
+use axum::routing::{get, on, MethodFilter};
 use axum::{Router, Extension};
 use axum::body::StreamBody;
 use axum::extract::Query;
@@ -40,7 +40,10 @@ async fn main() -> std::io::Result<()> {
             .route("/api", get(|Extension(tts_client): Extension<Arc<TTS>>| async move { 
                 format!("Api: {}", tts_client.api_url.as_str()) 
             }))
-            .route("/request", post(anon_request))
+            .route(
+                "/request", 
+                on(MethodFilter::GET | MethodFilter::POST, anon_request)
+            )
             .layer(Extension(tts_client));
 
     axum::Server::bind(&interface.parse().unwrap())
