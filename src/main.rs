@@ -42,7 +42,7 @@ async fn main() -> std::io::Result<()> {
             }))
             .route(
                 "/request", 
-                on(MethodFilter::GET | MethodFilter::POST, anon_request)
+                on(MethodFilter::GET | MethodFilter::POST, file_request)
             )
             .layer(Extension(tts_client));
 
@@ -59,7 +59,7 @@ struct RequestQuery {
     voice: String // Could be a enum, but there are a lot of voices (schizo fox)
 }
 
-async fn anon_request(query: Query<RequestQuery>, Extension(tts_client): Extension<Arc<TTS>>) 
+async fn file_request(query: Query<RequestQuery>, Extension(tts_client): Extension<Arc<TTS>>) 
         -> Result<([(header::HeaderName, String); 2], StreamBody<ReaderStream<tokio::fs::File>>), AppError> {
     /*let data = format!("{:<30}|{}", &query.text, &query.voice);
     let hash = md5::compute(data);

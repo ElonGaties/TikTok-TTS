@@ -19,9 +19,9 @@ jobs:
     - name: Make envfile
       run: |
         touch .env
-        echo SESSION_ID=${{ secrets.SESSION_ID }} >> .env
-        echo API_URL=${{ secrets.API_URL }} >> .env
-        echo INTERFACE=${{ secrets.INTERFACE }} >> .env
+        echo SESSION_ID=${{ secrets.SESSION_ID || null }} >> .env
+        echo API_URL=${{ secrets.API_URL || null }} >> .env
+        echo INTERFACE=${{ secrets.INTERFACE || null }} >> .env
     - uses: actions/checkout@v3
     - name: Build
       run: cargo build --verbose
